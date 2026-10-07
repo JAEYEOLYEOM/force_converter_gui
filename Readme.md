@@ -19,7 +19,8 @@ Tkinter로 만든 GUI 프로그램으로, 입력한 힘을 `N`, `kN`, `kgf` 단�
 - Python 표준 라이브러리의 `tkinter` 및 `math`
 - GUI를 표시할 수 있는 데스크톱 환경
 
-별도의 외부 Python 패키지는 사용하지 않습니다. 운영체제에 따라 Python 설치 시 Tkinter가 함께 설치되어 있어야 합니다.
+CSV 분석기의 그래프 기능에는 외부 Python 패키지 `matplotlib`이 필요합니다.
+운영체제에 따라 Python 설치 시 Tkinter가 함께 설치되어 있어야 합니다.
 
 ## 실행 명령
 
@@ -36,6 +37,90 @@ py force_converter.py
 ```
 
 실행하면 `힘 단위 변환기` 창이 열립니다.
+
+## 하중 데이터 분석
+
+`load_analyzer.py`는 같은 폴더의 `load_data.csv`를 읽어 하중과 응력을 분석합니다.
+원본 입력 파일은 읽기만 하며 덮어쓰지 않습니다.
+
+### 입력 CSV 형식과 단위
+
+입력 파일 이름은 `load_data.csv`이고, 첫 번째 행의 열 이름은 다음과 같아야 합니다.
+
+```text
+time_s,force_N
+```
+
+- `time_s`: 시간, 단위 `s`
+- `force_N`: 하중, 단위 `N`
+
+각 값은 유한한 숫자여야 합니다. 응력은 `N/mm²`를 `MPa`로 사용해 다음과 같이 계산합니다.
+
+```text
+stress_MPa = force_N / area_mm2
+```
+
+### 필요한 라이브러리
+
+- Python 3
+- Python 표준 라이브러리: `csv`, `math`, `pathlib`, `typing`
+- 외부 라이브러리: `matplotlib`
+
+`matplotlib`이 설치되어 있지 않다면 다음 명령으로 설치할 수 있습니다.
+
+```powershell
+python -m pip install matplotlib
+```
+
+### 단면적 설정 변경
+
+현재 단면적은 [load_analyzer.py](C:/Users/yjy05/OneDrive/Desktop/force_converter_gui.py/load_analyzer.py)의
+`AREA_MM2 = 200`으로 설정되어 있으며 단위는 `mm²`입니다. 다른 단면적을 사용하려면 이 값을 원하는
+수치로 변경한 뒤 프로그램을 다시 실행합니다.
+
+### 실행 명령
+
+분석기 파일이 있는 폴더에서 다음 명령을 실행합니다.
+
+```powershell
+python load_analyzer.py
+```
+
+현재 `load_data.csv`로 실행하면 제외 행과 유효 데이터 수를 포함해 다음 정보를 출력합니다.
+
+- 제외한 행 수
+- 유효한 데이터 수
+- 데이터 개수
+- 최대 하중(N)과 해당 시간(s)
+- 최대 응력(MPa)과 해당 시간(s)
+
+```text
+제외한 행 수: 0개
+유효한 데이터 수: 10개
+데이터 개수: 10개
+최대 하중: 800 N
+최대 하중 시간: 5 s
+최대 응력: 4 MPa
+최대 응력 시간: 5 s
+```
+
+### 출력 파일
+
+분석이 정상적으로 완료되면 같은 폴더에 다음 파일을 생성하거나 갱신합니다.
+
+- `load_result.csv`: `time_s`, `force_N`, 계산된 `stress_MPa` 열을 포함하는 결과 CSV
+- `stress_plot.png`: 시간–응력 그래프 이미지
+
+그래프의 x축은 `Time (s)`, y축은 `Stress (MPa)`입니다. 각 유효 데이터를 점으로 표시하고
+선으로 연결하며, 최대 응력 점은 빨간색으로 강조합니다. 최대 응력 점 옆에는 해당 시간과 응력 값이 표시됩니다.
+
+### 오류 처리 규칙
+
+- CSV 열 이름이 `time_s,force_N`과 다르거나 입력 파일을 읽을 수 없으면 오류 메시지를 출력하고 종료합니다.
+- `time_s` 또는 `force_N`이 빈칸, 숫자가 아닌 값, 유한하지 않은 값이면 원본 CSV의 행 번호와 문제 값을 출력합니다.
+- 문제가 있는 행은 응력 계산, `load_result.csv`, `stress_plot.png`에서 제외합니다.
+- 제외한 행 수와 유효한 데이터 수를 출력합니다.
+- 유효한 데이터가 하나도 없으면 계산과 결과 파일·그래프 생성을 중단하고 안내합니다.
 
 ## 정상 입력 예시
 
